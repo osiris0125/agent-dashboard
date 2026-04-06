@@ -1,14 +1,655 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>agent-dashboard</title>
-    <script type="module" crossorigin src="/assets/index-CLRSZox9.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-BbiZzbO7.css">
-  </head>
-  <body>
-    <div id="app"></div>
-  </body>
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agent 公司架構全景</title>
+  <style>
+    :root {
+      --bg:        #07070d;
+      --surface:   #0f1018;
+      --border:    rgba(255,255,255,0.08);
+      --text:      #e8eaf0;
+      --muted:     #7b8096;
+
+      --gold:      #f5c842;
+      --gold-dim:  rgba(245,200,66,0.12);
+      --blue:      #4a9eff;
+      --blue-dim:  rgba(74,158,255,0.12);
+      --green:     #4ade9a;
+      --green-dim: rgba(74,222,154,0.12);
+      --purple:    #b47dff;
+      --purple-dim:rgba(180,125,255,0.12);
+      --red:       #ff6b6b;
+      --red-dim:   rgba(255,107,107,0.12);
+      --gray:      #8899aa;
+      --gray-dim:  rgba(136,153,170,0.10);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      padding: 28px 32px 20px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(245,200,66,0.04) 0%, transparent 100%);
+    }
+    .header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--gold);
+    }
+    .header p { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+    /* Boss flow bar */
+    .flow-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 18px 32px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .flow-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+    .flow-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .flow-label { font-size: 11px; color: var(--muted); }
+    .flow-arrow { color: var(--muted); font-size: 18px; margin-top: -14px; }
+
+    .flow-node.boss .flow-icon  { background: var(--gold-dim); color: var(--gold); border: 1px solid rgba(245,200,66,0.3); font-size:20px; }
+    .flow-node.cos  .flow-icon  { background: var(--gold-dim); color: var(--gold); border: 1px solid rgba(245,200,66,0.3); font-size:12px; }
+    .flow-node.route .flow-icon { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(74,158,255,0.25); font-size:20px; }
+
+    .cos-steps {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      flex: 1;
+    }
+    .cos-step {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      background: var(--gold-dim);
+      color: var(--gold);
+      border: 1px solid rgba(245,200,66,0.2);
+    }
+    .cos-sep { color: var(--muted); font-size: 11px; }
+
+    /* Main */
+    .main { padding: 24px 32px; }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* Dept grid */
+    .dept-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    @media (max-width: 1100px) { .dept-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 768px)  { .dept-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 480px)  { .dept-grid { grid-template-columns: 1fr; } }
+
+    /* Card */
+    .card {
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      cursor: pointer;
+      transition: border-color 0.18s, box-shadow 0.18s, transform 0.15s;
+      overflow: hidden;
+    }
+    .card:hover {
+      border-color: rgba(255,255,255,0.16);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+      transform: translateY(-1px);
+    }
+    .card:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+    .card-header {
+      padding: 14px 16px 10px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .card-left { display: flex; align-items: flex-start; gap: 10px; }
+    .card-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      flex-shrink: 0;
+    }
+    .card-meta { min-width: 0; }
+    .card-name { font-size: 14px; font-weight: 600; line-height: 1.3; }
+    .card-cmd  { font-size: 11px; color: var(--muted); font-family: 'Courier New', monospace; margin-top: 2px; }
+    .card-count {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      padding: 0 16px 12px;
+    }
+    .tag {
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.06);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .card-expand-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 16px;
+      border-top: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--muted);
+      background: transparent;
+      width: 100%;
+      border: none;
+      border-top: 1px solid var(--border);
+      cursor: pointer;
+      gap: 5px;
+      transition: color 0.15s, background 0.15s;
+    }
+    .card-expand-btn:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+    .expand-arrow { transition: transform 0.2s; display: inline-block; }
+    .card.expanded .expand-arrow { transform: rotate(180deg); }
+
+    .card-detail {
+      display: none;
+      padding: 12px 16px 14px;
+      border-top: 1px solid var(--border);
+      background: rgba(0,0,0,0.2);
+    }
+    .card.expanded .card-detail { display: block; }
+    .card-detail p { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    .skill-list { display: flex; flex-direction: column; gap: 4px; }
+    .skill-item { display: flex; align-items: baseline; gap: 6px; font-size: 12px; }
+    .skill-name { font-family: 'Courier New', monospace; font-size: 11px; color: var(--text); flex-shrink: 0; }
+    .skill-desc { color: var(--muted); }
+
+    /* Color variants */
+    .card.gold  { border-color: rgba(245,200,66,0.2); }
+    .card.gold .card-icon  { background: var(--gold-dim); }
+    .card.gold .card-count { background: var(--gold-dim); color: var(--gold); }
+    .card.gold .card-name  { color: var(--gold); }
+    .card.gold:hover { border-color: rgba(245,200,66,0.4); box-shadow: 0 4px 24px rgba(245,200,66,0.08); }
+
+    .card.blue .card-icon  { background: var(--blue-dim); }
+    .card.blue .card-count { background: var(--blue-dim); color: var(--blue); }
+    .card.blue .card-name  { color: var(--blue); }
+    .card.blue:hover { border-color: rgba(74,158,255,0.3); box-shadow: 0 4px 24px rgba(74,158,255,0.08); }
+
+    .card.green .card-icon  { background: var(--green-dim); }
+    .card.green .card-count { background: var(--green-dim); color: var(--green); }
+    .card.green .card-name  { color: var(--green); }
+    .card.green:hover { border-color: rgba(74,222,154,0.3); box-shadow: 0 4px 24px rgba(74,222,154,0.08); }
+
+    .card.purple .card-icon  { background: var(--purple-dim); }
+    .card.purple .card-count { background: var(--purple-dim); color: var(--purple); }
+    .card.purple .card-name  { color: var(--purple); }
+    .card.purple:hover { border-color: rgba(180,125,255,0.3); box-shadow: 0 4px 24px rgba(180,125,255,0.08); }
+
+    .card.red .card-icon  { background: var(--red-dim); }
+    .card.red .card-count { background: var(--red-dim); color: var(--red); }
+    .card.red .card-name  { color: var(--red); }
+    .card.red:hover { border-color: rgba(255,107,107,0.3); box-shadow: 0 4px 24px rgba(255,107,107,0.08); }
+
+    .card.gray .card-icon  { background: var(--gray-dim); }
+    .card.gray .card-count { background: var(--gray-dim); color: var(--gray); }
+    .card.gray .card-name  { color: var(--gray); }
+
+    /* Engine layer */
+    .engine-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 600px) { .engine-bar { grid-template-columns: 1fr; } }
+
+    .engine-card {
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 16px 20px;
+      background: var(--surface);
+    }
+    .engine-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+    .engine-sub { font-size: 11px; color: var(--muted); }
+    .engine-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+    .engine-tag { font-size: 10px; padding: 2px 8px; border-radius: 10px; }
+
+    .engine-card.pai    { border-color: rgba(245,200,66,0.2); }
+    .engine-card.pai    .engine-title { color: var(--gold); }
+    .engine-card.pai    .engine-tag   { background: var(--gold-dim); color: var(--gold); }
+
+    .engine-card.gstack { border-color: rgba(74,158,255,0.2); }
+    .engine-card.gstack .engine-title { color: var(--blue); }
+    .engine-card.gstack .engine-tag   { background: var(--blue-dim); color: var(--blue); }
+
+    .engine-card.mem    { border-color: rgba(180,125,255,0.2); }
+    .engine-card.mem    .engine-title { color: var(--purple); }
+    .engine-card.mem    .engine-tag   { background: var(--purple-dim); color: var(--purple); }
+
+    /* MCP row */
+    .mcp-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 32px; }
+    .mcp-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .mcp-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.2);
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Agent 公司 — 架構全景</h1>
+  <p>15 部門 · 270+ Skills · PAI / gstack / claude-mem 三層引擎 · 9 MCP 整合</p>
+</div>
+
+<div class="flow-bar">
+  <div class="flow-node boss">
+    <div class="flow-icon">👤</div>
+    <div class="flow-label">老闆</div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-node cos">
+    <div class="flow-icon">/cos</div>
+    <div class="flow-label">CEO 參謀長</div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="cos-steps">
+    <span class="cos-step">TRIAGE</span>
+    <span class="cos-sep">→</span>
+    <span class="cos-step">CHALLENGE</span>
+    <span class="cos-sep">→</span>
+    <span class="cos-step">ROUTE</span>
+    <span class="cos-sep">→</span>
+    <span class="cos-step">REVIEW</span>
+    <span class="cos-sep">→</span>
+    <span class="cos-step">REPORT</span>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-node route">
+    <div class="flow-icon">⚡</div>
+    <div class="flow-label">派工部門</div>
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="section-title">15 個部門 — 點擊卡片展開 Skills</div>
+  <div class="dept-grid" id="deptGrid"></div>
+
+  <div class="section-title">三層引擎</div>
+  <div class="engine-bar">
+    <div class="engine-card pai">
+      <div class="engine-title">PAI — 思考層</div>
+      <div class="engine-sub">107 個 skills · ~/.agents/skills/ · 想什麼</div>
+      <div class="engine-tags">
+        <span class="engine-tag">thealgorithm</span>
+        <span class="engine-tag">council</span>
+        <span class="engine-tag">delegation</span>
+        <span class="engine-tag">agents</span>
+        <span class="engine-tag">telos</span>
+      </div>
+    </div>
+    <div class="engine-card gstack">
+      <div class="engine-title">gstack — 執行層</div>
+      <div class="engine-sub">v0.11 · Playwright headless browser · 怎麼做</div>
+      <div class="engine-tags">
+        <span class="engine-tag">browse</span>
+        <span class="engine-tag">qa</span>
+        <span class="engine-tag">ship</span>
+        <span class="engine-tag">review</span>
+        <span class="engine-tag">canary</span>
+      </div>
+    </div>
+    <div class="engine-card mem">
+      <div class="engine-title">claude-mem — 記憶層</div>
+      <div class="engine-sub">SQLite + ChromaDB + 語義索引 · 記什麼</div>
+      <div class="engine-tags">
+        <span class="engine-tag">mem-search</span>
+        <span class="engine-tag">timeline</span>
+        <span class="engine-tag">make-plan</span>
+        <span class="engine-tag">smart-explore</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">MCP 整合</div>
+  <div class="mcp-row">
+    <div class="mcp-chip"><span class="mcp-dot"></span>Windows-MCP — 桌面自動化</div>
+    <div class="mcp-chip"><span class="mcp-dot"></span>Claude in Chrome — 瀏覽器控制</div>
+    <div class="mcp-chip"><span class="mcp-dot"></span>Control Chrome — 輕量瀏覽器</div>
+    <div class="mcp-chip"><span class="mcp-dot"></span>PDF Tools — 讀寫填表</div>
+    <div class="mcp-chip"><span class="mcp-dot"></span>Notion — AI 工作區</div>
+    <div class="mcp-chip"><span class="mcp-dot"></span>Google Calendar — 行程管理</div>
+    <div class="mcp-chip"><span class="mcp-dot"></span>Telegram — 訊息通知</div>
+    <div class="mcp-chip"><span class="mcp-dot"></span>Scheduled Tasks — 定時任務</div>
+    <div class="mcp-chip"><span class="mcp-dot"></span>mcp-registry — MCP 商店</div>
+  </div>
+
+</div>
+
+<div class="footer">Agent 公司架構 v1.0 · 2026-04-07 · 15 部門 · 270+ Skills</div>
+
+<script>
+const depts = [
+  {
+    color: 'gold', icon: '⚡', name: 'CEO Office', cmd: '/cos', count: '5 skills',
+    tags: ['決策路由', 'Council 辯論', '三審', '挑戰決策'],
+    desc: '高層決策層：分類需求、挑戰方向、路由部門、審核結果。重大決策過 Council 辯論。',
+    skills: [
+      { name: 'chief-of-staff', desc: '/cos 參謀長，TRIAGE → CHALLENGE → ROUTE → REVIEW → REPORT' },
+      { name: 'thinking', desc: 'Council 辯論（重大決策用，3-7 agent 辯論）' },
+      { name: 'autoplan', desc: '三審委員會（CEO+設計+工程 視角）' },
+      { name: 'office-hours', desc: 'YC 式產品拷問' },
+      { name: 'firstprinciples', desc: '第一原理技術分析' },
+    ]
+  },
+  {
+    color: 'green', icon: '📢', name: '行銷部', cmd: '/marketing-director', count: '53+ skills',
+    tags: ['SEO×17', '廣告', 'CRO×6', '品牌', 'Email'],
+    desc: '全方位行銷執行：17 個 SEO 分析工具、廣告投放、6 種轉換率優化、品牌聲音、Email 序列。',
+    skills: [
+      { name: 'seo-* (17個)', desc: 'technical/local/content/schema/performance 等全套 SEO' },
+      { name: 'paid-ads / ad-creative', desc: '廣告投放與創意' },
+      { name: 'page-cro / form-cro / popup-cro', desc: '頁面/表單/彈窗轉換優化' },
+      { name: 'paywall-upgrade-cro / onboarding-cro', desc: '付費牆/入門流程優化' },
+      { name: 'brand-voice:* (4個)', desc: '品牌聲音發現/指南/執行/QA' },
+      { name: 'email-sequence / cold-email', desc: 'Email 行銷序列與冷郵件' },
+    ]
+  },
+  {
+    color: 'green', icon: '🔍', name: '市場研究部', cmd: '/market', count: '6 skills',
+    tags: ['TAM/SAM/SOM', '競品分析', '定價', '可行性'],
+    desc: '市場情報研究：市場規模分析、競品研究、定價策略建議、業務可行性報告。',
+    skills: [
+      { name: 'market-research-director', desc: '/market 市場研究總監，統籌研究任務' },
+      { name: 'research', desc: '4 模式深度研究（Quick/Standard/Extensive/Deep）' },
+      { name: 'customer-research', desc: '客戶研究與訪談分析' },
+      { name: 'pricing-strategy', desc: '定價策略分析' },
+      { name: 'data:analyze', desc: '市場數據分析' },
+      { name: 'marketing:competitive-brief', desc: '競品摘要報告' },
+    ]
+  },
+  {
+    color: 'blue', icon: '⚙️', name: '工程部', cmd: '/eng', count: '86+ skills',
+    tags: ['系統設計', '全端開發', 'QA', '出貨 CI/CD', '66 框架'],
+    desc: '技術研發全流程：系統設計 → 開發 → 測試 → 部署。含 fullstack-dev-skills 66 個語言/框架專家。',
+    skills: [
+      { name: 'engineering:system-design', desc: '系統設計 + ADR 架構決策' },
+      { name: 'fullstack-guardian', desc: '全端守護者（前端+後端+安全三層同步）' },
+      { name: 'fullstack-dev-skills (66個)', desc: 'React/Next.js/Python/Go/Rust/Java/Vue/Angular 等框架' },
+      { name: 'qa / qa-only / benchmark', desc: '測試+自動修 bug / 只報告 / 效能回歸' },
+      { name: 'ship / land-and-deploy / canary', desc: '出貨 → 部署 → 金絲雀監控' },
+      { name: 'investigate / debugging-wizard', desc: '系統化除錯（Iron Law：找到原因才修）' },
+    ]
+  },
+  {
+    color: 'red', icon: '🛡', name: '安全部', cmd: '/cso', count: '5 skills',
+    tags: ['OWASP Top 10', 'STRIDE', '安全審計', '護欄'],
+    desc: '資安防護：威脅建模、OWASP/STRIDE 審查、部署護欄、編輯限制鎖定。',
+    skills: [
+      { name: 'cso', desc: '資安長，完整安全審計' },
+      { name: 'security-review', desc: 'OWASP Top 10 + STRIDE 威脅建模' },
+      { name: 'guard', desc: 'careful + freeze 組合護欄' },
+      { name: 'careful', desc: '破壞性指令執行前警告' },
+      { name: 'freeze / unfreeze', desc: '限制/解除 指定檔案編輯範圍' },
+    ]
+  },
+  {
+    color: 'green', icon: '💼', name: '銷售部', cmd: '/sales', count: '15+ skills',
+    tags: ['Outreach', 'Pipeline', '客戶研究', 'Apollo', 'RevOps'],
+    desc: '業務開發全流程：潛客挖掘 → 信件撰寫 → 通話準備 → Pipeline 管理 → 銷售預測。',
+    skills: [
+      { name: 'sales-director', desc: '/sales 銷售總監，統籌業務任務' },
+      { name: 'sales:account-research', desc: '目標客戶研究' },
+      { name: 'sales:draft-outreach / cold-email', desc: 'Outreach 信件與冷郵件撰寫' },
+      { name: 'sales:call-prep / call-summary', desc: '通話前準備 / 通話後摘要' },
+      { name: 'sales:pipeline-review / forecast', desc: 'Pipeline 審查 + 銷售預測' },
+      { name: 'apollo:enrich-lead / prospect / sequence-load', desc: 'Apollo 潛客挖掘與序列' },
+    ]
+  },
+  {
+    color: 'blue', icon: '📊', name: '資料部', cmd: 'data:*', count: '9 skills',
+    tags: ['SQL', '統計分析', '視覺化', 'Dashboard'],
+    desc: '資料分析全流程：SQL 查詢撰寫、統計分析、圖表視覺化、儀表板建置、數據驗證。',
+    skills: [
+      { name: 'data:analyze', desc: '通用資料分析' },
+      { name: 'data:write-query / sql-queries', desc: 'SQL 查詢撰寫（功能相同，擇一使用）' },
+      { name: 'data:create-viz / data-visualization', desc: 'Python 圖表生成（功能相同，擇一使用）' },
+      { name: 'data:statistical-analysis', desc: '統計分析' },
+      { name: 'data:build-dashboard', desc: '數據儀表板建置' },
+      { name: 'data:validate', desc: '數據品質驗證' },
+    ]
+  },
+  {
+    color: 'blue', icon: '🕵️', name: '情報部', cmd: '/scraping', count: '3 skills',
+    tags: ['爬蟲', '4 級漸進', 'Apify 社群', '數據擷取'],
+    desc: '網路情報擷取：4 級漸進爬蟲策略（從輕量到重型），社群平台全覆蓋。',
+    skills: [
+      { name: 'scraping', desc: '爬蟲路由器，依請求類型分發至 brightdata / apify' },
+      { name: 'brightdata', desc: '4 級：WebFetch → Curl → Playwright → Proxy（漸進升級）' },
+      { name: 'apify', desc: '社群爬蟲：Twitter/IG/LinkedIn/TikTok/YouTube/FB/Maps/Amazon' },
+    ]
+  },
+  {
+    color: 'blue', icon: '🔬', name: '研究部', cmd: 'research', count: '4 skills',
+    tags: ['Quick', 'Standard', 'Extensive', 'Deep'],
+    desc: '深度研究與內容萃取：4 種模式從快速摘要到全面深度研究，支援多源資料整合。',
+    skills: [
+      { name: 'research', desc: '4 模式：Quick(快速) / Standard / Extensive / Deep(全面)' },
+      { name: 'contentanalysis', desc: '內容分析 router → extractwisdom' },
+      { name: 'extractwisdom', desc: '核心智慧萃取（PAI fabric）' },
+    ]
+  },
+  {
+    color: 'purple', icon: '🎨', name: '設計部', cmd: 'ui-ux-pro-max', count: '17+ skills',
+    tags: ['UI/UX 製作', '50+ 風格', '161 色盤', 'design-review'],
+    desc: 'ui-ux-pro-max 負責執行製作（50+風格/161色盤/10 stack），design:* 7 個 skill 負責審查。',
+    skills: [
+      { name: 'ui-ux-pro-max', desc: '主力設計執行工具（50+風格/161色盤/57字體/10技術棧）' },
+      { name: 'uiux-design / uiux-styling', desc: 'UI 設計系統與樣式方案' },
+      { name: 'uiux-brand / uiux-banner', desc: '品牌視覺識別 + Banner 設計' },
+      { name: 'uiux-slides / uiux-design-system', desc: '簡報設計 + 設計系統建立' },
+      { name: 'design:* (7個)', desc: 'accessibility/critique/handoff/ux-copy/user-research 等審查' },
+      { name: 'design-review', desc: '視覺 QA 最終審查' },
+    ]
+  },
+  {
+    color: 'gray', icon: '⚖️', name: '法務部', cmd: 'legal:*', count: '9 skills',
+    tags: ['合約審查', 'NDA', '合規', '風險評估'],
+    desc: '法律事務全覆蓋：合約審查、NDA 分析與分級、合規評估、法律風險識別。',
+    skills: [
+      { name: 'legal:contract-review', desc: '合約審查與風險標記' },
+      { name: 'legal:nda', desc: 'NDA 分析與分級' },
+      { name: 'legal:compliance', desc: '合規評估' },
+      { name: 'legal:risk', desc: '法律風險評估' },
+      { name: 'legal:vendor', desc: '供應商合約' },
+      { name: 'legal:* (另4個)', desc: 'signature/response/brief/meeting-briefing' },
+    ]
+  },
+  {
+    color: 'gray', icon: '💰', name: '財務部', cmd: 'finance:*', count: '8 skills',
+    tags: ['會計分錄', '財報生成', 'SOX 合規', '差異分析'],
+    desc: '財務管理全流程：會計分錄生成、財報製作、差異分析、SOX 合規審計。',
+    skills: [
+      { name: 'finance:journal-entry', desc: '會計分錄（另有 journal-entry-prep，功能相同）' },
+      { name: 'finance:statements', desc: '財務報表生成' },
+      { name: 'finance:variance', desc: '預算差異分析' },
+      { name: 'finance:sox', desc: 'SOX 內控合規' },
+      { name: 'finance:* (另4個)', desc: 'reconciliation/close/audit/context-extractor' },
+    ]
+  },
+  {
+    color: 'gray', icon: '📋', name: 'PM 部', cmd: 'product-management:*', count: '8 skills',
+    tags: ['Spec', 'Sprint 規劃', 'Roadmap', '競品'],
+    desc: '產品管理全流程：需求規格撰寫、Sprint 計畫、產品路線圖、競品分析、指標追蹤。',
+    skills: [
+      { name: 'product-management:spec', desc: '產品需求規格撰寫 (PRD)' },
+      { name: 'product-management:sprint', desc: 'Sprint 規劃' },
+      { name: 'product-management:roadmap', desc: '產品路線圖' },
+      { name: 'product-management:competitive-brief', desc: '競品分析摘要' },
+      { name: 'product-management:metrics', desc: '產品指標設計' },
+      { name: 'product-management:* (另3個)', desc: 'brainstorm/stakeholder/research-synthesis' },
+    ]
+  },
+  {
+    color: 'gray', icon: '📄', name: '文件部', cmd: 'xlsx / pdf / docx', count: '4 skills',
+    tags: ['Excel', 'PDF', 'Word', 'PPT'],
+    desc: 'Office 文件操作：xlsx PAI 版功能最強（金融模型/公式重算），PDF/Word/PPT 用 Anthropic 版。',
+    skills: [
+      { name: 'xlsx (PAI)', desc: 'Excel 操作，PAI 版較強（金融模型、公式重算、數據分析）' },
+      { name: 'anthropic-skills:pdf', desc: 'PDF 讀取、分析、內容萃取' },
+      { name: 'anthropic-skills:docx', desc: 'Word 文件生成與操作' },
+      { name: 'anthropic-skills:pptx', desc: 'PowerPoint 簡報生成' },
+    ]
+  },
+  {
+    color: 'purple', icon: '✨', name: '創意部', cmd: 'media / writestory', count: '6 skills',
+    tags: ['資訊圖表', '動態影片', '小說寫作', '演算藝術'],
+    desc: '創意製作：Mermaid 圖表、Remotion 動態影片、小說創作、p5.js 演算藝術、HTML artifact。',
+    skills: [
+      { name: 'media', desc: '插圖/Mermaid/資訊圖/動態影片(Remotion)' },
+      { name: 'writestory', desc: '小說/故事創作' },
+      { name: 'anthropic-skills:algorithmic-art', desc: 'p5.js 演算藝術生成' },
+      { name: 'anthropic-skills:canvas-design', desc: '視覺海報設計' },
+      { name: 'anthropic-skills:web-artifacts-builder', desc: '互動式 HTML artifact' },
+      { name: 'anthropic-skills:theme-factory', desc: '主題樣式系統生成' },
+    ]
+  },
+];
+
+const grid = document.getElementById('deptGrid');
+
+depts.forEach(dept => {
+  const card = document.createElement('div');
+  card.className = `card ${dept.color}`;
+  card.setAttribute('tabindex', '0');
+  card.setAttribute('role', 'button');
+  card.setAttribute('aria-expanded', 'false');
+
+  card.innerHTML = `
+    <div class="card-header">
+      <div class="card-left">
+        <div class="card-icon">${dept.icon}</div>
+        <div class="card-meta">
+          <div class="card-name">${dept.name}</div>
+          <div class="card-cmd">${dept.cmd}</div>
+        </div>
+      </div>
+      <div class="card-count">${dept.count}</div>
+    </div>
+    <div class="card-tags">
+      ${dept.tags.map(t => `<span class="tag">${t}</span>`).join('')}
+    </div>
+    <button class="card-expand-btn" tabindex="-1">
+      詳細 Skills <span class="expand-arrow">&#9662;</span>
+    </button>
+    <div class="card-detail">
+      <p>${dept.desc}</p>
+      <div class="skill-list">
+        ${dept.skills.map(s => `
+          <div class="skill-item">
+            <span class="skill-name">${s.name}</span>
+            <span class="skill-desc">— ${s.desc}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+
+  function toggle() {
+    const expanded = card.classList.toggle('expanded');
+    card.setAttribute('aria-expanded', String(expanded));
+  }
+
+  card.addEventListener('click', toggle);
+  card.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+  });
+
+  grid.appendChild(card);
+});
+</script>
+</body>
 </html>
